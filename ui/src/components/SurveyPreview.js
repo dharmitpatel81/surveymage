@@ -25,11 +25,13 @@ function SurveyPreview({ questions, onDeleteQuestion, onReorderQuestions, previe
   };
 
   return (
-    <div ref={previewRef} className="bg-white rounded-lg shadow-md p-6 text-left max-h-[calc(100vh-200px)] overflow-y-auto">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Survey Preview</h2>
+    <div ref={previewRef} className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6 text-left min-w-0">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-5 pb-3 border-b border-slate-200">
+        Survey Preview
+      </h2>
 
       {questions.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 sm:py-16 text-slate-400 text-sm">
           <p>No questions added yet</p>
         </div>
       ) : (

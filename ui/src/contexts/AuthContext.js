@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { 
   signInAnonymously,
   signInWithEmailAndPassword,
@@ -12,6 +12,8 @@ import { auth } from '../firebase/config';
 
 const AuthContext = createContext();
 
+const PERSISTENCE_DELAY_MS = 200;
+
 export function useAuth() {
   return useContext(AuthContext);
 }
@@ -19,70 +21,53 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const persistenceTimeoutRef = useRef(null);
 
-  // Sign in anonymously
-  const signInAnon = async () => {
-    try {
-      await signInAnonymously(auth);
-    } catch (error) {
-      console.error("Error signing in anonymously:", error);
-      throw error;
-    }
+  const signInAnon = () => signInAnonymously(auth);
+  
+  const signup = (email, password) => 
+    createUserWithEmailAndPassword(auth, email, password);
+  
+  const login = (email, password) => 
+    signInWithEmailAndPassword(auth, email, password);
+  
+  const signInWithGoogle = () => {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
   };
-
-  // Sign up with email and password
-  const signup = async (email, password) => {
-    try {
-      return await createUserWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error("Error signing up:", error);
-      throw error;
-    }
-  };
-
-  // Sign in with email and password
-  const login = async (email, password) => {
-    try {
-      return await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error("Error logging in:", error);
-      throw error;
-    }
-  };
-
-  // Sign in with Google
-  const signInWithGoogle = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      return await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error signing in with Google:", error);
-      throw error;
-    }
-  };
-
-  // Sign out
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out:", error);
-      throw error;
-    }
-  };
+  
+  const logout = () => signOut(auth);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-      
-      // Auto sign in anonymously if no user
-      if (!user) {
-        signInAnon();
+      if (user) {
+        if (persistenceTimeoutRef.current) {
+          clearTimeout(persistenceTimeoutRef.current);
+          persistenceTimeoutRef.current = null;
+        }
+        setCurrentUser(user);
+        setLoading(false);
+        return;
       }
+      // user is null: give Firebase a moment to restore from persistence
+      // so we don't sign in anonymously before the real user is restored on refresh
+      persistenceTimeoutRef.current = setTimeout(() => {
+        persistenceTimeoutRef.current = null;
+        if (auth.currentUser) {
+          setCurrentUser(auth.currentUser);
+        } else {
+          signInAnon();
+        }
+        setLoading(false);
+      }, PERSISTENCE_DELAY_MS);
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (persistenceTimeoutRef.current) {
+        clearTimeout(persistenceTimeoutRef.current);
+      }
+    };
   }, []);
 
   const value = {

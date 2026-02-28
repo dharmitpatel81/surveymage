@@ -41,6 +41,11 @@ Thumbs.db
 .firebaserc
 firebase-debug.log
 
+# Firebase Admin SDK (CRITICAL - Contains private keys)
+server/serviceAccountKey.json
+serviceAccountKey.json
+**/serviceAccountKey.json
+
 # Optional npm cache directory
 .npm
 

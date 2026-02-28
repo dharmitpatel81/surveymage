@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, ArrowLeft } from 'lucide-react';
 import SignIn from './SignIn';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function NavBar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const showBackButton = location.pathname.startsWith('/survey');
   const { currentUser, logout, isAnonymous } = useAuth();
   const [showSignIn, setShowSignIn] = useState(false);
+  const [signInMode, setSignInMode] = useState('login');
+
+  useEffect(() => {
+    const handleOpenSignIn = (event) => {
+      const mode = event.detail?.mode || 'login';
+      setSignInMode(mode);
+      setShowSignIn(true);
+    };
+
+    window.addEventListener('openSignIn', handleOpenSignIn);
+    return () => window.removeEventListener('openSignIn', handleOpenSignIn);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -17,50 +33,70 @@ function NavBar() {
 
   return (
     <>
-      <nav className="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-primary-600 font-bold text-lg">S</span>
-              </div>
-              <h1 className="text-xl font-bold text-white">SurveyMage</h1>
+      <header
+        className="header-full-width backdrop-blur-sm shadow-lg min-h-14 sm:min-h-[72px] flex items-center"
+        style={{ background: 'linear-gradient(135deg, #0d9488, #14b8a6)' }}
+      >
+        <div className="w-full px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              {showBackButton && (
+                <button
+                  onClick={() => navigate('/')}
+                  className="shrink-0 p-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                  title="Back to surveys"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2 sm:gap-3 min-w-0"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center shrink-0">
+                  <span className="text-teal-600 font-bold text-sm sm:text-lg">S</span>
+                </div>
+                <h1 className="text-base sm:text-xl font-bold text-white truncate">SurveyMage</h1>
+              </button>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
               {currentUser && (
-                <>
-                  {isAnonymous ? (
+                isAnonymous ? (
+                  <button
+                    onClick={() => setShowSignIn(true)}
+                    className="px-3 sm:px-5 py-2 bg-white text-teal-700 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-2 font-medium shadow-sm text-sm sm:text-base"
+                  >
+                    <User className="w-4 h-4 shrink-0" />
+                    Sign In
+                  </button>
+                ) : (
+                  <>
+                    <div className="hidden sm:flex items-center gap-2 text-white bg-white/20 px-3 py-2 rounded-lg max-w-[180px] lg:max-w-[220px]">
+                      <User className="w-5 h-5 shrink-0" />
+                      <span className="text-sm font-medium truncate">{currentUser.email || 'User'}</span>
+                    </div>
                     <button
-                      onClick={() => setShowSignIn(true)}
-                      className="px-5 py-2 bg-white text-primary-600 rounded-lg hover:bg-primary-50 transition-colors flex items-center gap-2 font-medium shadow-sm"
+                      onClick={handleLogout}
+                      className="px-3 sm:px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2 font-medium text-sm sm:text-base"
                     >
-                      <User className="w-4 h-4" />
-                      Sign In
+                      <LogOut className="w-4 h-4 shrink-0" />
+                      <span className="hidden sm:inline">Sign Out</span>
                     </button>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 text-white bg-primary-500 bg-opacity-30 px-4 py-2 rounded-lg">
-                        <User className="w-5 h-5" />
-                        <span className="text-sm font-medium">{currentUser.email || 'User'}</span>
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 bg-primary-500 bg-opacity-30 text-white rounded-lg hover:bg-opacity-50 transition-colors flex items-center gap-2 font-medium"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </>
-                  )}
-                </>
+                  </>
+                )
               )}
             </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {showSignIn && <SignIn onClose={() => setShowSignIn(false)} />}
+      {showSignIn && (
+        <SignIn
+          onClose={() => setShowSignIn(false)}
+          initialMode={signInMode}
+        />
+      )}
     </>
   );
 }

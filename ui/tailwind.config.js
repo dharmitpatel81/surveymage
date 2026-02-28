@@ -3,6 +3,9 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      maxWidth: {
+        'container': '1440px',
+      },
       colors: {
         // Professional cool blue palette
         primary: {

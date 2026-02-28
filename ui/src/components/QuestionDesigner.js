@@ -52,18 +52,20 @@ function QuestionDesigner({ onAddQuestion }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 text-left sticky top-6 border border-primary-100">
-      <h2 className="text-xl font-bold text-primary-900 mb-6">Question Designer</h2>
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6 text-left lg:sticky lg:top-6">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-5 pb-3 border-b border-slate-200">
+        Question Designer
+      </h2>
 
       <div className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-primary-900 mb-2">
+          <label className="block text-xs font-medium text-slate-600 mb-1.5">
             Question Type
           </label>
           <select
             value={questionType}
             onChange={(e) => setQuestionType(e.target.value)}
-            className="w-full px-3 py-2 border border-primary-200 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+            className="w-full px-3 py-2 border border-slate-300 rounded-md bg-white text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
           >
             {questionTypes.map(type => (
               <option key={type.value} value={type.value}>
@@ -74,7 +76,7 @@ function QuestionDesigner({ onAddQuestion }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary-900 mb-2">
+          <label className="block text-xs font-medium text-slate-600 mb-1.5">
             Question Text
           </label>
           <input
@@ -82,13 +84,13 @@ function QuestionDesigner({ onAddQuestion }) {
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder="Enter question text"
-            className="w-full px-3 py-2 border border-primary-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+            className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
           />
         </div>
 
         {needsOptions && (
           <div>
-            <label className="block text-sm font-medium text-primary-900 mb-2">
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">
               Answer Options
             </label>
             
@@ -96,12 +98,12 @@ function QuestionDesigner({ onAddQuestion }) {
               <div className="space-y-2 mb-3">
                 {options.map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <div className="flex-1 px-3 py-2 border border-primary-100 rounded-lg bg-primary-50 text-gray-700 text-sm">
+                    <div className="flex-1 px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-slate-700 text-sm">
                       {option}
                     </div>
                     <button
                       onClick={() => handleRemoveOption(index)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                       title="Remove option"
                     >
                       <X className="w-4 h-4" />
@@ -118,13 +120,14 @@ function QuestionDesigner({ onAddQuestion }) {
                 onChange={(e) => setCurrentOption(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddOption()}
                 placeholder="Add an option"
-                className="flex-1 px-3 py-2 border border-primary-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
               />
               <button
                 onClick={handleAddOption}
-                className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
+                className="p-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 border border-slate-200 transition-colors"
+                title="Add option"
               >
-                Add
+                <Plus className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -132,7 +135,7 @@ function QuestionDesigner({ onAddQuestion }) {
 
         <button
           onClick={handleAddQuestion}
-          className="w-full px-4 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+          className="w-full px-4 py-3 bg-slate-800 text-white font-medium rounded-md hover:bg-slate-900 border border-slate-700 transition-colors flex items-center justify-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Add Question
