@@ -47,10 +47,7 @@ function SurveyDesigner() {
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          setTitle(getDefaultTitle());
-          setQuestions([]);
-        }
+        if (!cancelled) navigate('/');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

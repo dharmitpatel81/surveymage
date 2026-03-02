@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader, ArrowLeft, Save, BarChart3, MessageSquare, FileQuestion } from 'lucide-react';
+import { Loader, Save, BarChart3, MessageSquare, FileQuestion } from 'lucide-react';
 import WidgetDesigner from './WidgetDesigner';
 import DashboardView from './DashboardView';
 import { getSurveyResponses } from '../utils/serverComm';
@@ -10,7 +10,6 @@ function DashboardDesigner() {
   const { id: surveyId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [data, setData] = useState(null);
   const [widgets, setWidgets] = useState([]);
   const previewRef = useRef(null);
@@ -19,7 +18,6 @@ function DashboardDesigner() {
     if (!surveyId) return;
     let cancelled = false;
     setLoading(true);
-    setError('');
     getSurveyResponses(surveyId)
       .then((res) => {
         if (cancelled) return;
@@ -38,8 +36,8 @@ function DashboardDesigner() {
           setDashboardTitle(defaultTitle);
         }
       })
-      .catch((e) => {
-        if (!cancelled) setError(e.message || 'Failed to load analytics');
+      .catch(() => {
+        if (!cancelled) navigate('/');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -87,22 +85,6 @@ function DashboardDesigner() {
         <div className="text-center">
           <Loader className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-teal-600 mx-auto mb-4" />
           <p className="text-slate-600 font-medium text-sm sm:text-base">Loading analytics...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex-1 min-h-0 bg-white px-4 py-10">
-        <div className="max-w-2xl mx-auto">
-          <p className="text-sm text-red-600 font-medium">{error}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="mt-4 flex items-center gap-2 text-teal-600 hover:text-teal-700"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
         </div>
       </div>
     );
