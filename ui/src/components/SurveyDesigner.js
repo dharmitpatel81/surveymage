@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, Loader, CheckCircle, BarChart3 } from 'lucide-react';
+import { Save, Loader, CheckCircle, BarChart3, Link2 } from 'lucide-react';
 import QuestionDesigner from './QuestionDesigner';
 import SurveyPreview from './SurveyPreview';
 import { getSurveyById, updateSurvey, createSurvey } from '../utils/serverComm';
@@ -57,7 +57,20 @@ function SurveyDesigner() {
   const [description, setDescription] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle');
   const [saveError, setSaveError] = useState('');
+  const [showCopied, setShowCopied] = useState(false);
   const previewRef = useRef(null);
+
+  const handleCopySurveyLink = async () => {
+    if (isNewSurvey || !surveyId) return;
+    const url = `${window.location.origin}/s/${surveyId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    } catch {
+      alert('Failed to copy link');
+    }
+  };
 
   const handleAddQuestion = (questionData) => {
     const newQuestion = {
@@ -189,7 +202,12 @@ function SurveyDesigner() {
   }
 
   return (
-    <div className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 bg-white">
+    <div className="flex-1 min-h-0 p-4 sm:p-6 lg:p-8 bg-white relative">
+      {showCopied && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg shadow-lg animate-fade-in">
+          Copied!
+        </div>
+      )}
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 min-w-0">
           <div className="w-full lg:w-1/3 space-y-4 sm:space-y-5 min-w-0">
@@ -228,6 +246,16 @@ function SurveyDesigner() {
                 <BarChart3 className="w-5 h-5 shrink-0" />
                 <span>Analyze</span>
               </button>
+              {!isNewSurvey && surveyId && (
+                <button
+                  onClick={handleCopySurveyLink}
+                  className="px-4 py-3 bg-teal-600 text-white font-medium rounded-md hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 border border-teal-700"
+                  title="Copy survey link"
+                >
+                  <Link2 className="w-5 h-5 shrink-0" />
+                  <span>Copy link</span>
+                </button>
+              )}
             </div>
 
             <QuestionDesigner onAddQuestion={handleAddQuestion} />
