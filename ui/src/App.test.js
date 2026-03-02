@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders SurveyMage app', async () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const heading = await screen.findByText(/SurveyMage|My Surveys/i, {}, { timeout: 5000 });
+  expect(heading).toBeInTheDocument();
 });

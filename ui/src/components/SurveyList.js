@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Loader, Lock } from 'lucide-react';
+import { Plus, Loader, Lock, BarChart3 } from 'lucide-react';
 import { getSurveys } from '../utils/serverComm';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -11,27 +11,28 @@ function SurveyList() {
   const [error, setError] = useState('');
   const { currentUser, isAnonymous } = useAuth();
 
+  const loadSurveys = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await getSurveys();
+      setSurveys(response.data || []);
+    } catch (err) {
+      console.error('Failed to load surveys:', err);
+      setError(err.message || 'Failed to load surveys');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (currentUser && !isAnonymous) {
+    const isLoggedIn = currentUser && !isAnonymous && currentUser.uid;
+    if (isLoggedIn) {
       loadSurveys();
     } else {
       setLoading(false);
     }
-  }, [currentUser?.uid, isAnonymous]);
-
-  const loadSurveys = async () => {
-    try {
-      setLoading(true);
-      const response = await getSurveys();
-      setSurveys(response.data || []);
-      setError('');
-    } catch (err) {
-      console.error('Failed to load surveys:', err);
-      setError('Failed to load surveys');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [currentUser, isAnonymous, loadSurveys]);
 
   const handleNewSurvey = () => {
     navigate('/survey/new');
@@ -72,21 +73,33 @@ function SurveyList() {
           </button>
 
           {surveys.map((survey, index) => (
-            <button
+            <div
               key={survey._id}
               onClick={() => navigate(`/survey/${survey._id}`)}
-              className="animate-card-enter rounded-xl sm:rounded-2xl border border-teal-200 p-4 sm:p-6 text-left transition-all duration-200 hover:-translate-y-0.5 sm:hover:-translate-y-1 shadow-sm hover:shadow-lg bg-white hover:bg-teal-50/30"
+              className="animate-card-enter rounded-xl sm:rounded-2xl border border-teal-200 p-4 sm:p-6 transition-all duration-200 hover:-translate-y-0.5 sm:hover:-translate-y-1 shadow-sm hover:shadow-lg bg-white hover:bg-teal-50/30 flex items-start gap-3 cursor-pointer"
               style={{ animationDelay: `${Math.min(index * 50, 300)}ms` }}
             >
-              <p className="text-sm sm:text-base font-semibold text-slate-900 truncate">
-                {survey.title || 'Untitled Survey'}
-              </p>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                {survey.questionCount ?? survey.questions?.length ?? 0} question{(survey.questionCount ?? survey.questions?.length ?? 0) !== 1 ? 's' : ''}
-                {' · '}
-                {survey.responseCount ?? 0} response{(survey.responseCount ?? 0) !== 1 ? 's' : ''}
-              </p>
-            </button>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm sm:text-base font-semibold text-slate-900 truncate">
+                  {survey.title || 'Untitled Survey'}
+                </p>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  {survey.questionCount ?? survey.questions?.length ?? 0} question{(survey.questionCount ?? survey.questions?.length ?? 0) !== 1 ? 's' : ''}
+                  {' · '}
+                  {survey.responseCount ?? 0} response{(survey.responseCount ?? 0) !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/survey/${survey._id}/analytics`);
+                }}
+                className="shrink-0 p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                title="View analytics"
+              >
+                <BarChart3 className="w-5 h-5" />
+              </button>
+            </div>
           ))}
         </div>
 

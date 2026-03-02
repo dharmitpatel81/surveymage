@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, User, ArrowLeft } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import SignIn from './SignIn';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function NavBar() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const showBackButton = location.pathname.startsWith('/survey');
   const { currentUser, logout, isAnonymous } = useAuth();
   const [showSignIn, setShowSignIn] = useState(false);
   const [signInMode, setSignInMode] = useState('login');
@@ -40,15 +38,6 @@ function NavBar() {
         <div className="w-full px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2 min-w-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              {showBackButton && (
-                <button
-                  onClick={() => navigate('/')}
-                  className="shrink-0 p-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
-                  title="Back to surveys"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              )}
               <button
                 onClick={() => navigate('/')}
                 className="flex items-center gap-2 sm:gap-3 min-w-0"

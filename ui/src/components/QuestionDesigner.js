@@ -11,7 +11,8 @@ function QuestionDesigner({ onAddQuestion }) {
     { value: 'multiple-choice', label: 'Multiple Choice' },
     { value: 'checkbox', label: 'Checkbox List' },
     { value: 'short-text', label: 'Short Text' },
-    { value: 'long-text', label: 'Long Text' }
+    { value: 'long-text', label: 'Long Text' },
+    { value: 'numeric', label: 'Numeric' }
   ];
 
   const needsOptions = questionType === 'multiple-choice' || questionType === 'checkbox';

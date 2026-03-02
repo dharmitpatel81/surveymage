@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import SurveyDesigner from './components/SurveyDesigner';
 import SurveyList from './components/SurveyList';
 import SurveyViewer from './components/SurveyViewer';
+import DashboardDesigner from './components/DashboardDesigner';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Routes>
               <Route path="/" element={<SurveyList />} />
               <Route path="/survey/new" element={<SurveyDesigner />} />
+              <Route path="/survey/:id/analytics" element={<DashboardDesigner />} />
               <Route path="/survey/:id" element={<SurveyDesigner />} />
               <Route path="/s/:survey_id" element={<SurveyViewer />} />
             </Routes>

@@ -6,6 +6,9 @@ require('dotenv').config();
 const surveyRoutes = require('./routes/surveyRoutes');
 const Survey = require('./models/Survey');
 const SurveyResponse = require('./models/SurveyResponse');
+const { verifyFirebaseToken } = require('./middleware/authMiddleware');
+const { isValidId } = require('./utils/validation');
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,9 +38,27 @@ app.get('/', (req, res) => {
   });
 });
 
-app.use('/api/surveys', surveyRoutes);
+/**
+ * GET /api/surveys/:id/responses
+ * Get survey and responses for analytics. Requires auth and ownership.
+ */
+app.get('/api/surveys/:id/responses', verifyFirebaseToken, async (req, res) => {
+  try {
+    if (!isValidId(req.params.id)) {
+      return res.status(400).json({ error: 'Bad Request', message: 'Invalid survey ID' });
+    }
+    const data = await db.getSurveyResponsesForAnalytics(req.params.id, req.user.uid);
+    if (!data) {
+      return res.status(404).json({ error: 'Not Found', message: 'Survey not found' });
+    }
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error fetching responses:', error);
+    return res.status(500).json({ error: 'Server Error', message: 'Failed to fetch responses' });
+  }
+});
 
-const isValidId = (id) => id && id !== 'undefined' && mongoose.Types.ObjectId.isValid(id);
+app.use('/api/surveys', surveyRoutes);
 
 /**
  * GET /api/checkSubmission?surveyId=xxx&submittedBy=xxx

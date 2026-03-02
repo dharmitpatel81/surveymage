@@ -142,7 +142,7 @@ function SurveyViewer() {
         questionId: q.id,
         value: answers[q.id],
       }));
-      const res = await submitSurveyResponse(surveyId, payload, submittedBy);
+      await submitSurveyResponse(surveyId, payload, submittedBy);
       setSubmitStatus('submitted');
       setAlreadySubmitted(true);
       markSubmittedLocally(surveyId);

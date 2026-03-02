@@ -110,6 +110,12 @@ export const getSurveyById = (surveyId) =>
   authenticatedFetch(`/surveys/${surveyId}`, { method: 'GET' });
 
 /**
+ * Get survey responses for analytics
+ */
+export const getSurveyResponses = (surveyId) =>
+  authenticatedFetch(`/surveys/${surveyId}/responses`, { method: 'GET' });
+
+/**
  * Delete a survey
  */
 export const deleteSurvey = (surveyId) =>

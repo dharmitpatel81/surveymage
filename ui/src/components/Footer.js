@@ -22,12 +22,12 @@ function Footer() {
             <Link to="/" className="hover:text-white transition-colors">
               My Surveys
             </Link>
-            <a href="#" className="hover:text-white transition-colors" onClick={(e) => e.preventDefault()}>
+            <button type="button" className="bg-transparent border-0 p-0 text-inherit cursor-pointer hover:text-white transition-colors">
               Privacy
-            </a>
-            <a href="#" className="hover:text-white transition-colors" onClick={(e) => e.preventDefault()}>
+            </button>
+            <button type="button" className="bg-transparent border-0 p-0 text-inherit cursor-pointer hover:text-white transition-colors">
               Terms
-            </a>
+            </button>
           </nav>
         </div>
 

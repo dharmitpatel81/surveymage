@@ -17,10 +17,6 @@
   background: linear-gradient(to bottom right, #f0fdfa, #ccfbf1);
 }
 
-.page-bg-slate {
-  background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
-}
-
 /* Card entrance animation */
 @keyframes card-enter {
   from {

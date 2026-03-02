@@ -5,19 +5,13 @@ import QuestionDesigner from './QuestionDesigner';
 import SurveyPreview from './SurveyPreview';
 import { getSurveyById, updateSurvey, createSurvey } from '../utils/serverComm';
 import { useAuth } from '../contexts/AuthContext';
+import { generateId } from '../utils/idUtils';
 
 function SurveyDesigner() {
   const { id: surveyId } = useParams();
   const navigate = useNavigate();
   const { isAnonymous } = useAuth();
   const isNewSurvey = surveyId === 'new' || !surveyId || String(surveyId) === 'undefined';
-
-  const generateQuestionId = () => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  };
 
   // Helper function to get default title
   const getDefaultTitle = () => {
@@ -44,7 +38,7 @@ function SurveyDesigner() {
         if (survey?.description !== undefined) setDescription(survey.description || '');
         if (survey?.questions?.length) {
           const loadedQuestions = survey.questions.map((q, i) => ({
-            id: q?.id ? String(q.id) : generateQuestionId(),
+            id: q?.id ? String(q.id) : generateId(),
             type: q.type || 'short-text',
             questionText: q.questionText || '',
             options: Array.isArray(q.options) ? q.options : []
@@ -62,7 +56,7 @@ function SurveyDesigner() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [surveyId]);
+  }, [surveyId, isNewSurvey]);
   const [description, setDescription] = useState('');
   const [saveStatus, setSaveStatus] = useState('idle');
   const [saveError, setSaveError] = useState('');
@@ -71,7 +65,7 @@ function SurveyDesigner() {
   const handleAddQuestion = (questionData) => {
     const newQuestion = {
       ...questionData,
-      id: generateQuestionId()
+      id: generateId()
     };
     setQuestions([...questions, newQuestion]);
     
@@ -112,8 +106,8 @@ function SurveyDesigner() {
       const surveyData = {
         title: title.trim(),
         description: description.trim(),
-        questions: questions.map((q, i) => ({
-          id: q?.id ? String(q.id) : generateQuestionId(),
+        questions: questions.map((q) => ({
+          id: q?.id ? String(q.id) : generateId(),
           type: q.type,
           questionText: q.questionText || '',
           options: Array.isArray(q.options) ? q.options : []
@@ -140,7 +134,11 @@ function SurveyDesigner() {
   };
 
   const handleAnalyzeResponses = () => {
-    alert('Analyze Responses feature coming soon!');
+    if (isNewSurvey || !surveyId) {
+      alert('Save the survey first to view analytics.');
+      return;
+    }
+    navigate(`/survey/${surveyId}/analytics`);
   };
 
   const renderSaveButtonContent = () => {

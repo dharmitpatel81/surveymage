@@ -49,6 +49,16 @@ function renderQuestionInput(question, readOnly, value, onChange) {
           onChange={readOnly && onChange ? (e) => onChange(e.target.value) : undefined}
         />
       );
+    case 'numeric':
+      return (
+        <input
+          type="number"
+          placeholder="Enter a number"
+          className="w-full px-3 py-2 border border-slate-300 rounded-md text-left text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 text-sm"
+          value={readOnly ? (value ?? '') : ''}
+          onChange={readOnly && onChange ? (e) => onChange(e.target.value) : undefined}
+        />
+      );
     case 'long-text':
       return (
         <textarea
