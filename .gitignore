@@ -34,7 +34,6 @@ lerna-debug.log*
 
 # OS
 Thumbs.db
-.DS_Store
 
 # Firebase
 .firebase/
@@ -54,6 +53,9 @@ serviceAccountKey.json
 
 # Build caches
 **/node_modules/.cache/
+
+# Empty placeholder (remove when adding shared code)
+shared/
 
 # Package lock files (choose one based on your package manager)
 # Uncomment the one you DON'T use:

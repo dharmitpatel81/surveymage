@@ -32,10 +32,11 @@ function WidgetDesigner({ questions = [], responses = [], onAddWidget }) {
     return true;
   });
   const effectiveType = availableTypes.some((t) => t.value === widgetType) ? widgetType : (availableTypes[0]?.value || 'bar');
+  const trimmedTitle = widgetTitle.trim();
 
   const handleAddWidget = (e) => {
     e?.preventDefault?.();
-    if (!widgetTitle.trim()) return;
+    if (!trimmedTitle) return;
     if (!questionId) {
       alert('Please select a question');
       return;
@@ -45,7 +46,7 @@ function WidgetDesigner({ questions = [], responses = [], onAddWidget }) {
       type: 'chart',
       questionId: String(questionId),
       chartType: effectiveType,
-      title: widgetTitle.trim(),
+      title: trimmedTitle,
       size: 'medium'
     };
 
@@ -106,15 +107,13 @@ function WidgetDesigner({ questions = [], responses = [], onAddWidget }) {
         {selectedQuestion && (
           <div>
             <h3 className="text-sm font-semibold text-slate-700 mb-2">Preview</h3>
-            {widgetTitle.trim() && (
-              <p className="text-sm text-slate-600 mb-3">{widgetTitle.trim()}</p>
-            )}
+            {trimmedTitle && <p className="text-sm text-slate-600 mb-3">{trimmedTitle}</p>}
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <WidgetDisplay
                 question={selectedQuestion}
                 responses={responses}
                 chartType={effectiveType}
-                title={widgetTitle.trim() || undefined}
+                title={trimmedTitle || undefined}
                 compact
                 legendPosition="top"
               />

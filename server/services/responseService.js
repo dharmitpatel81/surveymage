@@ -6,12 +6,12 @@ const logger = require('../utils/logger');
  * Response service - business logic for survey responses
  */
 async function checkSubmission(surveyId, submittedBy) {
-  const exists = await responseRepo.existsBySurveyAndUser(surveyId, submittedBy.trim());
+  const exists = await responseRepo.existsBySurveyAndUser(surveyId, submittedBy);
   return { submitted: !!exists };
 }
 
 async function submitResponse(surveyId, answers, submittedBy) {
-  const by = submittedBy.trim();
+  const by = submittedBy;
   const survey = await surveyRepo.findPublicById(surveyId);
   if (!survey) return { error: 'NOT_FOUND' };
   if (survey.isOpen === false) return { error: 'CLOSED' };

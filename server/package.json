@@ -18,14 +18,18 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.6",
+    "zod": "^3.25.38",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "firebase-admin": "^13.7.0",
-    "mongoose": "^9.2.3"
+    "mongoose": "^9.2.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^30.2.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "supertest": "^7.0.0"
   }
 }

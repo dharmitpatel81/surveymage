@@ -1,5 +1,17 @@
 const express = require('express');
 const router = express.Router();
+
+/**
+ * @openapi
+ * /surveys/create:
+ *   post:
+ *     summary: Create blank survey
+ *     tags: [Surveys]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       201: { description: Survey created }
+ *       401: { description: Unauthorized }
+ */
 const surveyService = require('../services/surveyService');
 const { verifyFirebaseToken } = require('../middleware/authMiddleware');
 const { validateSurveyId, validateSurveyUpdate } = require('../middleware/validateRequest');
@@ -7,9 +19,6 @@ const { publicLimiter } = require('../middleware/rateLimit');
 const apiRes = require('../utils/apiResponse');
 const logger = require('../utils/logger');
 
-/**
- * POST /surveys/create - Create blank survey
- */
 router.post('/create', verifyFirebaseToken, async (req, res) => {
   try {
     const survey = await surveyService.createSurvey(req.user.uid, req.user.email);
@@ -25,7 +34,17 @@ router.post('/create', verifyFirebaseToken, async (req, res) => {
 });
 
 /**
- * PUT /surveys/:id - Update survey
+ * @openapi
+ * /surveys/{id}:
+ *   put:
+ *     summary: Update survey
+ *     tags: [Surveys]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     requestBody: { content: { application/json: { schema: { type: object } } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       404: { description: Not found }
  */
 router.put('/:id', verifyFirebaseToken, validateSurveyId, validateSurveyUpdate, async (req, res) => {
   try {
@@ -54,7 +73,14 @@ router.put('/:id', verifyFirebaseToken, validateSurveyId, validateSurveyUpdate, 
 });
 
 /**
- * GET /surveys - List user's surveys
+ * @openapi
+ * /surveys:
+ *   get:
+ *     summary: List user's surveys
+ *     tags: [Surveys]
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: List of surveys }
  */
 router.get('/', verifyFirebaseToken, async (req, res) => {
   try {
@@ -67,7 +93,16 @@ router.get('/', verifyFirebaseToken, async (req, res) => {
 });
 
 /**
- * GET /surveys/:id/responses - Get survey + responses for analytics
+ * @openapi
+ * /surveys/{id}/responses:
+ *   get:
+ *     summary: Get survey and responses for analytics
+ *     tags: [Surveys]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     responses:
+ *       200: { description: Survey and responses }
+ *       404: { description: Not found }
  */
 router.get('/:id/responses', verifyFirebaseToken, validateSurveyId, async (req, res) => {
   try {
@@ -83,7 +118,15 @@ router.get('/:id/responses', verifyFirebaseToken, validateSurveyId, async (req, 
 });
 
 /**
- * GET /surveys/public/:id - Public survey (no auth, rate limited)
+ * @openapi
+ * /surveys/public/{id}:
+ *   get:
+ *     summary: Get public survey (no auth)
+ *     tags: [Surveys]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     responses:
+ *       200: { description: Survey }
+ *       404: { description: Not found }
  */
 router.get('/public/:id', publicLimiter, validateSurveyId, async (req, res) => {
   try {
@@ -98,9 +141,6 @@ router.get('/public/:id', publicLimiter, validateSurveyId, async (req, res) => {
   }
 });
 
-/**
- * GET /surveys/:id - Get survey by ID (auth required)
- */
 router.get('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
   try {
     const survey = await surveyService.getById(req.params.id, req.user.uid);
@@ -115,7 +155,24 @@ router.get('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
 });
 
 /**
- * DELETE /surveys/:id - Delete survey
+ * @openapi
+ * /surveys/{id}:
+ *   get:
+ *     summary: Get survey by ID (auth)
+ *     tags: [Surveys]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     responses:
+ *       200: { description: Survey }
+ *       404: { description: Not found }
+ *   delete:
+ *     summary: Delete survey
+ *     tags: [Surveys]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     responses:
+ *       200: { description: Deleted }
+ *       404: { description: Not found }
  */
 router.delete('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
   try {

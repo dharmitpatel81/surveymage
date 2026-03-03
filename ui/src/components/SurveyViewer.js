@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { getPublicSurveyById, submitSurveyResponse, checkSubmission } from '../utils/serverComm';
+import { generateId } from '../utils/idUtils';
 import { useAuth } from '../contexts/AuthContext';
 import QuestionPreview from './QuestionPreview';
 import Loading from './Loading';
@@ -12,7 +13,7 @@ const SUBMITTED_KEY = 'surveymage_submitted';
 function getOrCreateAnonymousId() {
   let id = localStorage.getItem(ANON_KEY);
   if (!id) {
-    id = crypto.randomUUID();
+    id = generateId();
     localStorage.setItem(ANON_KEY, id);
   }
   return id;

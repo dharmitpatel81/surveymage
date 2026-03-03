@@ -2,54 +2,21 @@ import { auth } from '../firebase/config';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
 
-function getErrorMessage(data) {
-  return data?.error?.message ?? data?.message ?? 'Request failed';
+async function apiFetch(endpoint, options = {}, authenticated = false) {
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (authenticated) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+    headers['Authorization'] = `Bearer ${await user.getIdToken()}`;
+  }
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.message ?? data?.message ?? 'Request failed');
+  return data;
 }
 
-/**
- * Get the current user's Firebase ID token
- */
-const getAuthToken = async () => {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
-  return await user.getIdToken();
-};
-
-/**
- * Make an authenticated API request
- */
-const authenticatedFetch = async (endpoint, options = {}) => {
-  const token = await getAuthToken();
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(getErrorMessage(data));
-  return data;
-};
-
-/**
- * Make a public (unauthenticated) API request
- */
-const publicFetch = async (endpoint, options = {}) => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(getErrorMessage(data));
-  return data;
-};
+const authenticatedFetch = (endpoint, options) => apiFetch(endpoint, options, true);
+const publicFetch = (endpoint, options) => apiFetch(endpoint, options, false);
 
 /**
  * Create a new blank survey

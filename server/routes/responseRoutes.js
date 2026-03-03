@@ -1,14 +1,29 @@
 const express = require('express');
 const router = express.Router();
+
+/**
+ * @openapi
+ * /responses/checkSubmission:
+ *   get:
+ *     summary: Check if user has already submitted
+ *     tags: [Responses]
+ *     parameters:
+ *       - in: query
+ *         name: surveyId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: submittedBy
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: { submitted: boolean } }
+ */
 const responseService = require('../services/responseService');
 const { validateCheckSubmission, validateSubmitResponse } = require('../middleware/validateRequest');
 const apiRes = require('../utils/apiResponse');
 const logger = require('../utils/logger');
 
-/**
- * GET /checkSubmission?surveyId=xxx&submittedBy=xxx
- * Public: check if user has already submitted
- */
 router.get('/checkSubmission', validateCheckSubmission, async (req, res) => {
   try {
     const { surveyId, submittedBy } = req.query;
@@ -21,8 +36,25 @@ router.get('/checkSubmission', validateCheckSubmission, async (req, res) => {
 });
 
 /**
- * POST /submitResponse
- * Public: submit survey responses (no auth)
+ * @openapi
+ * /responses/submitResponse:
+ *   post:
+ *     summary: Submit survey responses (no auth)
+ *     tags: [Responses]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [surveyId, answers, submittedBy]
+ *             properties:
+ *               surveyId: { type: string }
+ *               answers: { type: array }
+ *               submittedBy: { type: string }
+ *     responses:
+ *       201: { description: Submitted }
+ *       400: { description: Validation error }
+ *       403: { description: Survey closed }
  */
 router.post('/submitResponse', validateSubmitResponse, async (req, res) => {
   try {
