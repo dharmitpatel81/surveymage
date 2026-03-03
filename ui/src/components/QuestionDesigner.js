@@ -6,6 +6,7 @@ function QuestionDesigner({ onAddQuestion }) {
   const [questionText, setQuestionText] = useState('');
   const [options, setOptions] = useState([]);
   const [currentOption, setCurrentOption] = useState('');
+  const [required, setRequired] = useState(false);
 
   const questionTypes = [
     { value: 'multiple-choice', label: 'Multiple Choice' },
@@ -42,7 +43,8 @@ function QuestionDesigner({ onAddQuestion }) {
     const questionData = {
       type: questionType,
       questionText: questionText.trim(),
-      options: needsOptions ? options : []
+      options: needsOptions ? options : [],
+      required
     };
 
     onAddQuestion(questionData);
@@ -50,6 +52,7 @@ function QuestionDesigner({ onAddQuestion }) {
     setQuestionText('');
     setOptions([]);
     setCurrentOption('');
+    setRequired(false);
   };
 
   return (
@@ -77,16 +80,29 @@ function QuestionDesigner({ onAddQuestion }) {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">
+          <label htmlFor="question-text" className="block text-xs font-medium text-slate-600 mb-1.5">
             Question Text
           </label>
           <input
+            id="question-text"
             type="text"
             value={questionText}
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder="Enter question text"
+            aria-label="Question text"
             className="w-full px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
           />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="required"
+            checked={required}
+            onChange={(e) => setRequired(e.target.checked)}
+            className="w-4 h-4 text-teal-600 rounded border-slate-300"
+          />
+          <label htmlFor="required" className="text-xs font-medium text-slate-600">Required question</label>
         </div>
 
         {needsOptions && (
@@ -115,19 +131,21 @@ function QuestionDesigner({ onAddQuestion }) {
             )}
 
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={currentOption}
-                onChange={(e) => setCurrentOption(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddOption()}
-                placeholder="Add an option"
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
-              />
-              <button
-                onClick={handleAddOption}
-                className="p-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 border border-slate-200 transition-colors"
-                title="Add option"
-              >
+            <input
+              type="text"
+              value={currentOption}
+              onChange={(e) => setCurrentOption(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddOption()}
+              placeholder="Add an option"
+              aria-label="Add an option"
+              className="flex-1 px-3 py-2 border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
+            />
+            <button
+              onClick={handleAddOption}
+              className="p-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 border border-slate-200 transition-colors"
+              title="Add option"
+              aria-label="Add option"
+            >
                 <Plus className="w-5 h-5" />
               </button>
             </div>
@@ -137,8 +155,9 @@ function QuestionDesigner({ onAddQuestion }) {
         <button
           onClick={handleAddQuestion}
           className="w-full px-4 py-3 bg-slate-800 text-white font-medium rounded-md hover:bg-slate-900 border border-slate-700 transition-colors flex items-center justify-center gap-2"
+          aria-label="Add question"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" aria-hidden />
           Add Question
         </button>
       </div>

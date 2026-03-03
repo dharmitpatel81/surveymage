@@ -53,18 +53,24 @@ function WidgetPreview({ widget, question, responses, onDeleteWidget }) {
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
+          aria-label="Drag to reorder"
         >
-          <GripVertical className="w-4 h-4 sm:w-5 sm:h-5" />
+          <GripVertical className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden />
         </button>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-slate-800">{widget.title || question.questionText}</h3>
         </div>
         <button
-          onClick={() => onDeleteWidget && onDeleteWidget(widget.id)}
+          onClick={() => {
+            if (onDeleteWidget && window.confirm('Remove this widget from the dashboard?')) {
+              onDeleteWidget(widget.id);
+            }
+          }}
           className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
           title="Remove widget"
+          aria-label="Remove widget"
         >
-          <Trash2 className="w-5 h-5" />
+          <Trash2 className="w-5 h-5" aria-hidden />
         </button>
       </div>
       <div className="flex-1 min-h-[240px] overflow-visible">

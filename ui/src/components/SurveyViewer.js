@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Loader, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { getPublicSurveyById, submitSurveyResponse, checkSubmission } from '../utils/serverComm';
 import { useAuth } from '../contexts/AuthContext';
 import QuestionPreview from './QuestionPreview';
+import Loading from './Loading';
 
 const ANON_KEY = 'surveymage_anonymous_id';
 const SUBMITTED_KEY = 'surveymage_submitted';
@@ -67,6 +68,7 @@ function SurveyViewer() {
     type: q.type,
     questionText: q.questionText,
     options: Array.isArray(q.options) ? q.options : [],
+    required: !!q.required
   })), [survey]);
 
   useEffect(() => {
@@ -135,6 +137,17 @@ function SurveyViewer() {
     e.preventDefault();
     if (!surveyId) return;
 
+    const requiredQuestions = questions.filter((q) => q.required);
+    for (const q of requiredQuestions) {
+      const val = answers[q.id];
+      const isEmpty = val === '' || val === undefined || val === null ||
+        (Array.isArray(val) && val.length === 0);
+      if (isEmpty) {
+        setError(`Please answer the required question: "${q.questionText}"`);
+        return;
+      }
+    }
+
     setError('');
     setSubmitStatus('submitting');
     try {
@@ -153,11 +166,17 @@ function SurveyViewer() {
   };
 
   if (loading) {
+    return <Loading message="Loading survey..." className="flex-1 min-h-0 bg-white" />;
+  }
+
+  if (survey && survey.isOpen === false) {
     return (
-      <div className="flex-1 min-h-0 flex items-center justify-center bg-white px-4">
-        <div className="text-center">
-          <Loader className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-teal-600 mx-auto mb-4" />
-          <p className="text-slate-600 font-medium text-sm sm:text-base">Loading survey...</p>
+      <div className="flex-1 min-h-0 bg-white px-4 py-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-8 text-center">
+            <h2 className="text-xl font-semibold text-slate-900">{survey?.title || 'Survey'}</h2>
+            <p className="text-slate-600 mt-4">This survey is closed and no longer accepting responses.</p>
+          </div>
         </div>
       </div>
     );
@@ -208,7 +227,7 @@ function SurveyViewer() {
             {questions.map((q, idx) => (
               <div key={q.id} className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Question {idx + 1}
+                  Question {idx + 1}{q.required && <span className="text-red-500 ml-1">*</span>}
                 </p>
                 <QuestionPreview
                   question={q}

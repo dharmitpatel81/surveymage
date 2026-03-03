@@ -1,6 +1,10 @@
 import { auth } from '../firebase/config';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1';
+
+function getErrorMessage(data) {
+  return data?.error?.message ?? data?.message ?? 'Request failed';
+}
 
 /**
  * Get the current user's Firebase ID token
@@ -17,55 +21,34 @@ const getAuthToken = async () => {
  * Make an authenticated API request
  */
 const authenticatedFetch = async (endpoint, options = {}) => {
-  try {
-    const token = await getAuthToken();
-    
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
+  const token = await getAuthToken();
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...options.headers,
+    },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(getErrorMessage(data));
+  return data;
 };
 
 /**
  * Make a public (unauthenticated) API request
  */
 const publicFetch = async (endpoint, options = {}) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    throw error;
-  }
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(getErrorMessage(data));
+  return data;
 };
 
 /**
@@ -131,17 +114,19 @@ export const getPublicSurveyById = (surveyId) =>
  * Public: check if user has already submitted this survey.
  * @returns {Promise<{ submitted: boolean }>}
  */
-export const checkSubmission = (surveyId, submittedBy) =>
-  publicFetch(`/checkSubmission?surveyId=${encodeURIComponent(surveyId)}&submittedBy=${encodeURIComponent(submittedBy)}`, {
+export const checkSubmission = async (surveyId, submittedBy) => {
+  const res = await publicFetch(`/responses/checkSubmission?surveyId=${encodeURIComponent(surveyId)}&submittedBy=${encodeURIComponent(submittedBy)}`, {
     method: 'GET',
   });
+  return { submitted: res.data?.submitted ?? res.submitted ?? false };
+};
 
 /**
  * Public: submit survey responses (no auth). Stores in response collection.
  * submittedBy is required for one-response-per-user enforcement.
  */
 export const submitSurveyResponse = (surveyId, answers, submittedBy) =>
-  publicFetch('/submitResponse', {
+  publicFetch('/responses/submitResponse', {
     method: 'POST',
     body: JSON.stringify({ surveyId, answers, submittedBy }),
   });

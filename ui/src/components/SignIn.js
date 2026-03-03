@@ -59,8 +59,9 @@ function SignIn({ onClose, initialMode = 'login' }) {
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close sign in"
         >
-          <X className="w-6 h-6" />
+          <X className="w-6 h-6" aria-hidden />
         </button>
 
         <div className="text-center mb-4 sm:mb-6">
@@ -73,8 +74,8 @@ function SignIn({ onClose, initialMode = 'login' }) {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0" />
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm" role="alert" aria-live="polite">
+            <AlertCircle className="w-5 h-5 shrink-0" aria-hidden />
             <span>{error}</span>
           </div>
         )}

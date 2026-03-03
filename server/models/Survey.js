@@ -15,7 +15,8 @@ const questionSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  options: [String]
+  options: [String],
+  required: { type: Boolean, default: false }
 }, { _id: false });
 
 const surveySchema = new mongoose.Schema({
@@ -37,13 +38,17 @@ const surveySchema = new mongoose.Schema({
   createdByEmail: {
     type: String
   },
-  isPublished: {
-    type: Boolean,
-    default: false
-  },
   responseCount: {
     type: Number,
     default: 0
+  },
+  isOpen: {
+    type: Boolean,
+    default: true
+  },
+  dashboardConfig: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   }
 }, {
   timestamps: true

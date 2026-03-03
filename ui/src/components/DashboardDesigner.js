@@ -1,14 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader, Save, BarChart3, MessageSquare, FileQuestion } from 'lucide-react';
+import { Save, BarChart3, MessageSquare, FileQuestion, Download } from 'lucide-react';
 import WidgetDesigner from './WidgetDesigner';
 import DashboardView from './DashboardView';
-import { getSurveyResponses } from '../utils/serverComm';
+import Loading from './Loading';
+import { getSurveyResponses, updateSurvey } from '../utils/serverComm';
+import { useError } from '../contexts/ErrorContext';
 import { generateId } from '../utils/idUtils';
 
 function DashboardDesigner() {
   const { id: surveyId } = useParams();
   const navigate = useNavigate();
+  const { reportError } = useError();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [widgets, setWidgets] = useState([]);
@@ -23,17 +26,23 @@ function DashboardDesigner() {
         if (cancelled) return;
         setData(res.data);
         const defaultTitle = res.data?.survey?.title || '';
-        const saved = localStorage.getItem(`dashboard-${surveyId}`);
-        if (saved) {
-          try {
-            const { title, widgets: savedWidgets } = JSON.parse(saved);
-            setDashboardTitle(title || defaultTitle);
-            if (Array.isArray(savedWidgets) && savedWidgets.length > 0) setWidgets(savedWidgets);
-          } catch {
+        const serverConfig = res.data?.survey?.dashboardConfig;
+        if (serverConfig && (serverConfig.title || (Array.isArray(serverConfig.widgets) && serverConfig.widgets.length > 0))) {
+          setDashboardTitle(serverConfig.title || defaultTitle);
+          if (Array.isArray(serverConfig.widgets) && serverConfig.widgets.length > 0) setWidgets(serverConfig.widgets);
+        } else {
+          const saved = localStorage.getItem(`dashboard-${surveyId}`);
+          if (saved) {
+            try {
+              const { title, widgets: savedWidgets } = JSON.parse(saved);
+              setDashboardTitle(title || defaultTitle);
+              if (Array.isArray(savedWidgets) && savedWidgets.length > 0) setWidgets(savedWidgets);
+            } catch {
+              setDashboardTitle(defaultTitle);
+            }
+          } else {
             setDashboardTitle(defaultTitle);
           }
-        } else {
-          setDashboardTitle(defaultTitle);
         }
       })
       .catch(() => {
@@ -43,15 +52,50 @@ function DashboardDesigner() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [surveyId]);
+  }, [surveyId, navigate]);
 
   const survey = data?.survey;
   const responses = data?.responses || [];
   const questions = survey?.questions || [];
   const [dashboardTitle, setDashboardTitle] = useState('');
-  const handleSaveDashboard = () => {
+  const handleSaveDashboard = async () => {
     const config = { title: dashboardTitle, widgets };
-    localStorage.setItem(`dashboard-${surveyId}`, JSON.stringify(config));
+    try {
+      await updateSurvey(surveyId, { dashboardConfig: config });
+    } catch (err) {
+      reportError('Failed to sync dashboard to server', { error: err });
+    }
+  };
+
+  const handleExportCSV = () => {
+    const questions = survey?.questions || [];
+    const escape = (s) => `"${String(s).replace(/"/g, '""')}"`;
+    const headers = ['Submitted At', ...questions.map((q) => escape(q.questionText || q.id || 'Q'))];
+    const rows = responses.map((r) => {
+      const submittedAt = r.submittedAt ? new Date(r.submittedAt).toISOString() : '';
+      const answers = (r.answers || []).reduce((acc, a) => {
+        acc[a.questionId] = a.value;
+        return acc;
+      }, {});
+      const cells = [
+        escape(submittedAt),
+        ...questions.map((q) => {
+          const v = answers[q.id];
+          if (v === undefined || v === null) return '';
+          const str = Array.isArray(v) ? v.join('; ') : String(v);
+          return escape(str);
+        })
+      ];
+      return cells.join(',');
+    });
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `responses-${surveyId}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleAddWidget = (widgetData) => {
@@ -80,14 +124,7 @@ function DashboardDesigner() {
   };
 
   if (loading) {
-    return (
-      <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50 px-4">
-        <div className="text-center">
-          <Loader className="w-10 h-10 sm:w-12 sm:h-12 animate-spin text-teal-600 mx-auto mb-4" />
-          <p className="text-slate-600 font-medium text-sm sm:text-base">Loading analytics...</p>
-        </div>
-      </div>
-    );
+    return <Loading message="Loading analytics..." className="flex-1 min-h-0 bg-slate-50" />;
   }
 
   const surveyTitle = survey?.title || 'Untitled Survey';
@@ -126,6 +163,14 @@ function DashboardDesigner() {
               <span className="text-xs text-teal-100">questions</span>
             </div>
           </div>
+          <button
+            onClick={handleExportCSV}
+            disabled={responses.length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/80 text-teal-700 font-semibold rounded-lg hover:bg-teal-50 transition-all shadow-md hover:shadow-lg shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Download className="w-5 h-5" />
+            Export CSV
+          </button>
           <button
             onClick={handleSaveDashboard}
             className="flex items-center gap-2 px-4 py-2.5 bg-white text-teal-700 font-semibold rounded-lg hover:bg-teal-50 transition-all shadow-md hover:shadow-lg shrink-0"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useError } from '../contexts/ErrorContext';
 import { LogOut, User } from 'lucide-react';
 import SignIn from './SignIn';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 function NavBar() {
   const navigate = useNavigate();
   const { currentUser, logout, isAnonymous } = useAuth();
+  const { reportError } = useError();
   const [showSignIn, setShowSignIn] = useState(false);
   const [signInMode, setSignInMode] = useState('login');
 
@@ -25,7 +27,7 @@ function NavBar() {
     try {
       await logout();
     } catch (error) {
-      console.error("Failed to log out:", error);
+      reportError('Failed to log out', { error });
     }
   };
 
@@ -61,9 +63,11 @@ function NavBar() {
                   </button>
                 ) : (
                   <>
-                    <div className="hidden sm:flex items-center gap-2 text-white bg-white/20 px-3 py-2 rounded-lg max-w-[180px] lg:max-w-[220px]">
-                      <User className="w-5 h-5 shrink-0" />
-                      <span className="text-sm font-medium truncate">{currentUser.email || 'User'}</span>
+                    <div className="hidden sm:flex items-center gap-2 text-white bg-white/20 px-3 py-2 rounded-lg max-w-[180px] lg:max-w-[220px]" title={currentUser?.email || ''}>
+                      <User className="w-5 h-5 shrink-0" aria-hidden />
+                      <span className="text-sm font-medium truncate">
+                        {currentUser?.displayName?.trim() || (currentUser?.email ? currentUser.email.split('@')[0] : null) || currentUser?.email || 'User'}
+                      </span>
                     </div>
                     <button
                       onClick={handleLogout}

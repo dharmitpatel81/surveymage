@@ -1,284 +1,132 @@
 const express = require('express');
 const router = express.Router();
-const Survey = require('../models/Survey');
-const SurveyResponse = require('../models/SurveyResponse');
+const surveyService = require('../services/surveyService');
 const { verifyFirebaseToken } = require('../middleware/authMiddleware');
-const { isValidId } = require('../utils/validation');
+const { validateSurveyId, validateSurveyUpdate } = require('../middleware/validateRequest');
+const { publicLimiter } = require('../middleware/rateLimit');
+const apiRes = require('../utils/apiResponse');
+const logger = require('../utils/logger');
 
 /**
- * POST /api/surveys/create
- * Create a new blank survey and return its ID
- * Protected route - requires authentication
+ * POST /surveys/create - Create blank survey
  */
 router.post('/create', verifyFirebaseToken, async (req, res) => {
   try {
-    // Create a blank survey
-    const survey = new Survey({
-      title: 'Untitled Survey',
-      description: '',
-      questions: [],
-      createdBy: req.user.uid,
-      createdByEmail: req.user.email || null
-    });
-
-    await survey.save();
-
-    res.status(201).json({
-      success: true,
-      message: 'Survey created successfully',
-      data: {
-        surveyId: survey._id.toString(),
-        title: survey.title,
-        createdAt: survey.createdAt
-      }
-    });
-
+    const survey = await surveyService.createSurvey(req.user.uid, req.user.email);
+    apiRes.success(res, {
+      surveyId: survey._id.toString(),
+      title: survey.title,
+      createdAt: survey.createdAt
+    }, 'Survey created successfully', 201);
   } catch (error) {
-    console.error('Error creating survey:', error);
-    res.status(500).json({ 
-      error: 'Server Error', 
-      message: 'Failed to create survey' 
-    });
+    logger.error('Create survey failed', { error: error.message });
+    apiRes.error(res, 'SERVER_ERROR', 'Failed to create survey', 500);
   }
 });
 
 /**
- * PUT /api/surveys/:id
- * Update an existing survey
- * Protected route - requires authentication
+ * PUT /surveys/:id - Update survey
  */
-router.put('/:id', verifyFirebaseToken, async (req, res) => {
+router.put('/:id', verifyFirebaseToken, validateSurveyId, validateSurveyUpdate, async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) {
-      return res.status(400).json({ error: 'Bad Request', message: 'Invalid survey ID' });
-    }
-    const { title, description, questions } = req.body;
-
-    // Find survey and verify ownership
-    const survey = await Survey.findOne({
-      _id: req.params.id,
-      createdBy: req.user.uid
+    const { title, description, questions, isOpen, dashboardConfig } = req.body;
+    const survey = await surveyService.updateSurvey(req.params.id, req.user.uid, {
+      ...(title && { title: title.trim() }),
+      ...(description !== undefined && { description: description.trim() }),
+      ...(questions && { questions }),
+      ...(typeof isOpen === 'boolean' && { isOpen }),
+      ...(dashboardConfig !== undefined && { dashboardConfig })
     });
-
     if (!survey) {
-      return res.status(404).json({ 
-        error: 'Not Found', 
-        message: 'Survey not found or you do not have permission to edit it' 
-      });
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found or you do not have permission to edit it', 404);
     }
-
-    // Validation
-    if (title && !title.trim()) {
-      return res.status(400).json({ 
-        error: 'Validation Error', 
-        message: 'Survey title cannot be empty' 
-      });
-    }
-
-    if (questions && (!Array.isArray(questions) || questions.length === 0)) {
-      return res.status(400).json({ 
-        error: 'Validation Error', 
-        message: 'At least one question is required' 
-      });
-    }
-
-    // Validate each question if provided
-    if (questions) {
-      for (const question of questions) {
-        if (!question.id || String(question.id).trim() === '') {
-          return res.status(400).json({
-            error: 'Validation Error',
-            message: 'All questions must have an id'
-          });
-        }
-
-        if (!question.questionText || !question.questionText.trim()) {
-          return res.status(400).json({ 
-            error: 'Validation Error', 
-            message: 'All questions must have text' 
-          });
-        }
-
-        if (!['multiple-choice', 'checkbox', 'short-text', 'long-text', 'numeric'].includes(question.type)) {
-          return res.status(400).json({ 
-            error: 'Validation Error', 
-            message: 'Invalid question type' 
-          });
-        }
-
-        if ((question.type === 'multiple-choice' || question.type === 'checkbox') && 
-            (!question.options || question.options.length === 0)) {
-          return res.status(400).json({ 
-            error: 'Validation Error', 
-            message: `Question "${question.questionText}" must have options` 
-          });
-        }
-      }
-    }
-
-    // Update survey
-    if (title) survey.title = title.trim();
-    if (description !== undefined) survey.description = description.trim();
-    if (questions) survey.questions = questions;
-
-    await survey.save();
-
-    res.json({
-      success: true,
-      message: 'Survey updated successfully',
-      data: {
-        surveyId: survey._id.toString(),
-        title: survey.title,
-        questionCount: survey.questions.length,
-        updatedAt: survey.updatedAt
-      }
-    });
-
+    apiRes.success(res, {
+      surveyId: survey._id.toString(),
+      title: survey.title,
+      questionCount: survey.questions.length,
+      updatedAt: survey.updatedAt
+    }, 'Survey updated successfully');
   } catch (error) {
-    console.error('Error updating survey:', error);
-    const message = error.name === 'ValidationError' 
-      ? (error.message || 'Validation failed')
-      : (error.message || 'Failed to update survey');
-    res.status(500).json({ 
-      error: 'Server Error', 
-      message 
-    });
+    logger.error('Update survey failed', { error: error.message });
+    const message = error.name === 'ValidationError' ? error.message : 'Failed to update survey';
+    apiRes.error(res, 'SERVER_ERROR', message, 500);
   }
 });
 
 /**
- * GET /api/surveys
- * Get all surveys for the authenticated user.
- * Includes question count (from questions array) and response count (from response collection).
+ * GET /surveys - List user's surveys
  */
 router.get('/', verifyFirebaseToken, async (req, res) => {
   try {
-    const surveys = await Survey.find({ createdBy: req.user.uid })
-      .sort({ createdAt: -1 })
-      .select('-__v')
-      .lean();
-
-    const surveyIds = surveys.map((s) => s._id);
-    const responseCounts = await SurveyResponse.aggregate([
-      { $match: { surveyId: { $in: surveyIds } } },
-      { $group: { _id: '$surveyId', count: { $sum: 1 } } }
-    ]);
-    const countMap = new Map(responseCounts.map((r) => [r._id.toString(), r.count]));
-
-    const data = surveys.map((s) => ({
-      ...s,
-      questionCount: (s.questions || []).length,
-      responseCount: countMap.get(s._id.toString()) ?? s.responseCount ?? 0
-    }));
-
-    res.json({
-      success: true,
-      count: data.length,
-      data
-    });
+    const data = await surveyService.listByUser(req.user.uid);
+    apiRes.success(res, data);
   } catch (error) {
-    console.error('Error fetching surveys:', error);
-    res.status(500).json({
-      error: 'Server Error',
-      message: 'Failed to fetch surveys'
-    });
+    logger.error('List surveys failed', { error: error.message });
+    apiRes.error(res, 'SERVER_ERROR', 'Failed to fetch surveys', 500);
   }
 });
 
 /**
- * GET /api/surveys/public/:id
- * Public survey fetch for survey taker experience
- * Returns only what is needed to take a survey.
+ * GET /surveys/:id/responses - Get survey + responses for analytics
  */
-router.get('/public/:id', async (req, res) => {
+router.get('/:id/responses', verifyFirebaseToken, validateSurveyId, async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) {
-      return res.status(400).json({ error: 'Bad Request', message: 'Invalid survey ID' });
+    const data = await surveyService.getResponsesForAnalytics(req.params.id, req.user.uid);
+    if (!data) {
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found', 404);
     }
-
-    const survey = await Survey.findById(req.params.id)
-      .select('title description questions')
-      .lean();
-
-    if (!survey) {
-      return res.status(404).json({ error: 'Not Found', message: 'Survey not found' });
-    }
-
-    return res.json({ success: true, data: survey });
+    apiRes.success(res, data);
   } catch (error) {
-    console.error('Error fetching public survey:', error);
-    return res.status(500).json({ error: 'Server Error', message: 'Failed to fetch survey' });
+    logger.error('Get responses failed', { error: error.message });
+    apiRes.error(res, 'SERVER_ERROR', 'Failed to fetch responses', 500);
   }
 });
 
 /**
- * GET /api/surveys/:id
- * Get a specific survey by ID
+ * GET /surveys/public/:id - Public survey (no auth, rate limited)
  */
-router.get('/:id', verifyFirebaseToken, async (req, res) => {
+router.get('/public/:id', publicLimiter, validateSurveyId, async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) {
-      return res.status(400).json({ error: 'Bad Request', message: 'Invalid survey ID' });
-    }
-    const survey = await Survey.findOne({
-      _id: req.params.id,
-      createdBy: req.user.uid
-    })
-      .lean();
-
+    const survey = await surveyService.getPublicById(req.params.id);
     if (!survey) {
-      return res.status(404).json({ 
-        error: 'Not Found', 
-        message: 'Survey not found' 
-      });
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found', 404);
     }
-
-    res.json({
-      success: true,
-      data: survey
-    });
-
+    apiRes.success(res, survey);
   } catch (error) {
-    console.error('Error fetching survey:', error);
-    res.status(500).json({ 
-      error: 'Server Error', 
-      message: 'Failed to fetch survey' 
-    });
+    logger.error('Get public survey failed', { error: error.message });
+    apiRes.error(res, 'SERVER_ERROR', 'Failed to fetch survey', 500);
   }
 });
 
 /**
- * DELETE /api/surveys/:id
- * Delete a survey
+ * GET /surveys/:id - Get survey by ID (auth required)
  */
-router.delete('/:id', verifyFirebaseToken, async (req, res) => {
+router.get('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
   try {
-    if (!isValidId(req.params.id)) {
-      return res.status(400).json({ error: 'Bad Request', message: 'Invalid survey ID' });
-    }
-    const survey = await Survey.findOneAndDelete({
-      _id: req.params.id,
-      createdBy: req.user.uid
-    });
-
+    const survey = await surveyService.getById(req.params.id, req.user.uid);
     if (!survey) {
-      return res.status(404).json({ 
-        error: 'Not Found', 
-        message: 'Survey not found' 
-      });
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found', 404);
     }
-
-    res.json({
-      success: true,
-      message: 'Survey deleted successfully'
-    });
-
+    apiRes.success(res, survey);
   } catch (error) {
-    console.error('Error deleting survey:', error);
-    res.status(500).json({ 
-      error: 'Server Error', 
-      message: 'Failed to delete survey' 
-    });
+    logger.error('Get survey failed', { error: error.message });
+    apiRes.error(res, 'SERVER_ERROR', 'Failed to fetch survey', 500);
+  }
+});
+
+/**
+ * DELETE /surveys/:id - Delete survey
+ */
+router.delete('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
+  try {
+    const deleted = await surveyService.deleteSurvey(req.params.id, req.user.uid);
+    if (!deleted) {
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found', 404);
+    }
+    apiRes.success(res, null, 'Survey deleted successfully');
+  } catch (error) {
+    logger.error('Delete survey failed', { error: error.message });
+    apiRes.error(res, 'SERVER_ERROR', 'Failed to delete survey', 500);
   }
 });
 

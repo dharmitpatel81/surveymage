@@ -1,16 +1,11 @@
 import React from 'react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import WidgetPreview from './WidgetPreview';
+import { useDnDSensors } from '../hooks/useDnDSensors';
 
 function DashboardView({ surveyTitle, widgets = [], questions = [], responses = [], onDeleteWidget, onReorderWidgets, previewRef }) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  const sensors = useDnDSensors();
 
   const handleDragEnd = (event) => {
     const { active, over } = event;

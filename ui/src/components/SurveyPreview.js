@@ -1,16 +1,11 @@
 import React from 'react';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import QuestionPreview from './QuestionPreview';
+import { useDnDSensors } from '../hooks/useDnDSensors';
 
-function SurveyPreview({ questions, onDeleteQuestion, onReorderQuestions, previewRef }) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+function SurveyPreview({ questions, onDeleteQuestion, onReorderQuestions, onUpdateQuestion, previewRef }) {
+  const sensors = useDnDSensors();
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -50,6 +45,7 @@ function SurveyPreview({ questions, onDeleteQuestion, onReorderQuestions, previe
                   key={question.id}
                   question={question}
                   onDeleteQuestion={onDeleteQuestion}
+                  onUpdateQuestion={onUpdateQuestion}
                 />
               ))}
             </div>

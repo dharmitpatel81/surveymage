@@ -52,6 +52,9 @@ serviceAccountKey.json
 # Optional eslint cache
 .eslintcache
 
+# Build caches
+**/node_modules/.cache/
+
 # Package lock files (choose one based on your package manager)
 # Uncomment the one you DON'T use:
 # package-lock.json  # if using yarn

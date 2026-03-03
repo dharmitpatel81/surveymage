@@ -22,12 +22,12 @@ function Footer() {
             <Link to="/" className="hover:text-white transition-colors">
               My Surveys
             </Link>
-            <button type="button" className="bg-transparent border-0 p-0 text-inherit cursor-pointer hover:text-white transition-colors">
+            <Link to="/privacy" className="hover:text-white transition-colors">
               Privacy
-            </button>
-            <button type="button" className="bg-transparent border-0 p-0 text-inherit cursor-pointer hover:text-white transition-colors">
+            </Link>
+            <Link to="/terms" className="hover:text-white transition-colors">
               Terms
-            </button>
+            </Link>
           </nav>
         </div>
 
