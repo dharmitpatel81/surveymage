@@ -2,13 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyCmW0GWt5rFinwZZDSHqp8gHgPWRCmRCO4",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "surveymage-0.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "surveymage-0",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "surveymage-0.firebasestorage.app",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "399560611213",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:399560611213:web:bb9f838f30448966e999c4"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
+
+if (!firebaseConfig.apiKey) {
+  throw new Error('Missing Firebase config. Add REACT_APP_FIREBASE_* to ui/.env (see ui/.env.example)');
+}
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
