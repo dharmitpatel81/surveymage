@@ -23,16 +23,44 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true
+  }
+}));
 
 app.get('/', (req, res) => {
   res.json({
     message: 'SurveyMage API',
     version: '1.0.0',
     apiVersion: API_VERSION,
-    status: 'running'
+    status: 'running',
+    docs: '/api-docs'
   });
 });
+
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'SurveyMage API',
+    basePath: `/api/${API_VERSION}`,
+    docs: '/api-docs'
+  });
+});
+
+const apiInfo = {
+  message: 'SurveyMage API',
+  version: '1.0.0',
+  apiVersion: API_VERSION,
+  status: 'running',
+  endpoints: {
+    surveys: `/api/${API_VERSION}/surveys`,
+    responses: `/api/${API_VERSION}/responses`
+  },
+  docs: '/api-docs'
+};
+app.get(`/api/${API_VERSION}`, (req, res) => res.json(apiInfo));
+app.get(`/api/${API_VERSION}/`, (req, res) => res.json(apiInfo));
 
 app.get('/health', (req, res) => {
   const mongo = mongoose.connection.readyState === 1;
@@ -41,11 +69,8 @@ app.get('/health', (req, res) => {
 });
 
 const apiPrefix = `/api/${API_VERSION}`;
-const apiLegacy = '/api';
 app.use(`${apiPrefix}/surveys`, surveyRoutes);
 app.use(`${apiPrefix}/responses`, publicLimiter, responseRoutes);
-app.use(`${apiLegacy}/surveys`, surveyRoutes);
-app.use(`${apiLegacy}/responses`, publicLimiter, responseRoutes);
 
 app.use((req, res) => {
   logger.warn('Route not found', { path: req.path });

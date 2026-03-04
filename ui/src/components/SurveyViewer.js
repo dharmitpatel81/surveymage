@@ -98,7 +98,8 @@ function SurveyViewer() {
       })
       .then((res) => {
         if (cancelled || !res) return;
-        const s = res.data;
+        const s = res?.data;
+        if (!s) return;
         setSurvey(s);
 
         const initial = {};
@@ -205,6 +206,11 @@ function SurveyViewer() {
             <p className="text-sm text-slate-600 mt-2">
               {alreadySubmitted ? 'You have already submitted a response for this survey.' : 'Your submission was received successfully.'}
             </p>
+            {!currentUser && (
+              <p className="text-xs text-slate-500 mt-4">
+                Note: Submission is tracked per browser/device. Clearing site data may allow another response.
+              </p>
+            )}
           </div>
         </div>
       </div>

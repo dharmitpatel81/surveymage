@@ -4,9 +4,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2 } from 'lucide-react';
 import WidgetDisplay from './WidgetDisplay';
 
+const DEFAULT_SIZE = 'sm:col-span-1';
 const SIZE_CLASSES = {
-  small: 'sm:col-span-1',
-  medium: 'sm:col-span-1',
+  small: DEFAULT_SIZE,
+  medium: DEFAULT_SIZE,
   large: 'sm:col-span-2 xl:col-span-2'
 };
 

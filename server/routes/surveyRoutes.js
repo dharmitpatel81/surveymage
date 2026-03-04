@@ -81,6 +81,7 @@ router.put('/:id', verifyFirebaseToken, validateSurveyId, validateSurveyUpdate, 
  *     security: [{ bearerAuth: [] }]
  *     responses:
  *       200: { description: List of surveys }
+ *       401: { description: Unauthorized - click Authorize and add Firebase ID token }
  */
 router.get('/', verifyFirebaseToken, async (req, res) => {
   try {
@@ -123,16 +124,24 @@ router.get('/:id/responses', verifyFirebaseToken, validateSurveyId, async (req, 
  *   get:
  *     summary: Get public survey (no auth)
  *     tags: [Surveys]
- *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     security: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *         description: Survey ID (24 hex chars). Get from MongoDB surveys collection or survey URL /s/{id}
+ *         example: "69a66153ad74b4d1c90dd7a1"
  *     responses:
- *       200: { description: Survey }
- *       404: { description: Not found }
+ *       200: { description: "Survey with title, description, questions, isOpen" }
+ *       400: { description: Invalid ID format }
+ *       404: { description: Survey not found }
  */
 router.get('/public/:id', publicLimiter, validateSurveyId, async (req, res) => {
   try {
     const survey = await surveyService.getPublicById(req.params.id);
     if (!survey) {
-      return apiRes.error(res, 'NOT_FOUND', 'Survey not found', 404);
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found. Check that the ID exists in the database (24 hex chars, e.g. 69a66153ad74b4d1c90dd7a1)', 404);
     }
     apiRes.success(res, survey);
   } catch (error) {
@@ -145,7 +154,7 @@ router.get('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
   try {
     const survey = await surveyService.getById(req.params.id, req.user.uid);
     if (!survey) {
-      return apiRes.error(res, 'NOT_FOUND', 'Survey not found', 404);
+      return apiRes.error(res, 'NOT_FOUND', 'Survey not found or you do not have permission to access it', 404);
     }
     apiRes.success(res, survey);
   } catch (error) {
@@ -161,10 +170,15 @@ router.get('/:id', verifyFirebaseToken, validateSurveyId, async (req, res) => {
  *     summary: Get survey by ID (auth)
  *     tags: [Surveys]
  *     security: [{ bearerAuth: [] }]
- *     parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *         description: MongoDB ObjectId (24 hex chars). Use GET /surveys first to get IDs you own.
  *     responses:
  *       200: { description: Survey }
- *       404: { description: Not found }
+ *       404: { description: Survey not found or not owned by you }
  *   delete:
  *     summary: Delete survey
  *     tags: [Surveys]

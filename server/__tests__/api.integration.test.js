@@ -7,6 +7,18 @@ jest.mock('../utils/logger', () => ({
   error: () => {}
 }));
 
+jest.mock('../config/firebase', () => ({
+  auth: () => ({
+    verifyIdToken: () =>
+      Promise.resolve({
+        uid: 'test-uid',
+        email: 'test@test.com',
+        emailVerified: true,
+        firebase: { sign_in_provider: 'password' }
+      })
+  })
+}));
+
 const app = require('../app');
 
 describe('API integration', () => {
@@ -16,6 +28,26 @@ describe('API integration', () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('SurveyMage API');
       expect(res.body.status).toBe('running');
+      expect(res.body.docs).toBe('/api-docs');
+    });
+  });
+
+  describe('GET /api', () => {
+    it('returns API base path and docs link', async () => {
+      const res = await request(app).get('/api');
+      expect(res.status).toBe(200);
+      expect(res.body.basePath).toBe('/api/v1');
+      expect(res.body.docs).toBe('/api-docs');
+    });
+  });
+
+  describe('GET /api/v1', () => {
+    it('returns API info and endpoints', async () => {
+      const res = await request(app).get('/api/v1');
+      expect(res.status).toBe(200);
+      expect(res.body.message).toBe('SurveyMage API');
+      expect(res.body.endpoints?.surveys).toBe('/api/v1/surveys');
+      expect(res.body.docs).toBe('/api-docs');
     });
   });
 

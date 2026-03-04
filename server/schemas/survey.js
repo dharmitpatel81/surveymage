@@ -18,10 +18,13 @@ const questionSchema = z.object({
 const surveyUpdateSchema = z.object({
   title: z.union([z.string().trim().min(1), z.null()]).optional(),
   description: z.union([z.string().trim(), z.null()]).optional(),
-  questions: z.array(questionSchema).min(1, 'At least one question is required').optional(),
+  questions: z.array(questionSchema).optional(),
   isOpen: z.boolean().optional(),
   dashboardConfig: z.any().optional()
-});
+}).refine(
+  (data) => data.questions === undefined || data.questions.length > 0,
+  { message: 'At least one question is required when updating questions', path: ['questions'] }
+);
 
 const answerSchema = z.object({
   questionId: z.string().min(1),

@@ -1,10 +1,9 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
 
-jest.mock('../firebase/config', () => ({
-  auth: {}
-}));
+const mockUnsubscribe = jest.fn();
+jest.mock('../firebase/config', () => ({ auth: {} }));
 jest.mock('firebase/auth', () => ({
   signInAnonymously: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
@@ -13,8 +12,8 @@ jest.mock('firebase/auth', () => ({
   GoogleAuthProvider: jest.fn(),
   signOut: jest.fn(),
   onAuthStateChanged: jest.fn((auth, cb) => {
-    cb(null);
-    return () => {};
+    cb({ email: 'test@test.com', isAnonymous: false });
+    return mockUnsubscribe;
   })
 }));
 
@@ -29,5 +28,5 @@ test('AuthProvider provides auth context', async () => {
       <TestComponent />
     </AuthProvider>
   );
-  expect(await screen.findByText(/Logged out/i)).toBeInTheDocument();
+  expect(await screen.findByText(/Logged in/i)).toBeInTheDocument();
 });

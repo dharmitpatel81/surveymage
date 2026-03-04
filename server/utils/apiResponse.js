@@ -8,10 +8,10 @@ function success(res, data = null, message = null, statusCode = 200) {
   return res.status(statusCode).json(body);
 }
 
-function error(res, code, message, statusCode = 400, details = []) {
+function error(res, code, message, statusCode = 400) {
   return res.status(statusCode).json({
     success: false,
-    error: { code, message, details }
+    error: { code, message }
   });
 }
 

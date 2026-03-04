@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useError } from '../contexts/ErrorContext';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Key } from 'lucide-react'; // eslint-disable-line no-unused-vars -- Key used in dev-mode only
 import SignIn from './SignIn';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,19 @@ function NavBar() {
   const { reportError } = useError();
   const [showSignIn, setShowSignIn] = useState(false);
   const [signInMode, setSignInMode] = useState('login');
+  const [tokenCopied, setTokenCopied] = useState(false); // eslint-disable-line no-unused-vars -- used in dev API Token button
+
+  const handleCopyApiToken = async () => { // eslint-disable-line no-unused-vars -- used in dev API Token button
+    if (!currentUser || isAnonymous) return;
+    try {
+      const token = await currentUser.getIdToken();
+      await navigator.clipboard.writeText(token);
+      setTokenCopied(true);
+      setTimeout(() => setTokenCopied(false), 2000);
+    } catch (err) {
+      reportError('Failed to copy token', { error: err });
+    }
+  };
 
   useEffect(() => {
     const handleOpenSignIn = (event) => {
@@ -63,6 +76,16 @@ function NavBar() {
                   </button>
                 ) : (
                   <>
+                    {process.env.NODE_ENV === 'development' && (
+                      <button
+                        onClick={handleCopyApiToken}
+                        className="px-3 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2 font-medium text-sm"
+                        title="Copy API token for Swagger (http://localhost:5000/api-docs)"
+                      >
+                        <Key className="w-4 h-4 shrink-0" />
+                        {tokenCopied ? 'Copied!' : 'API Token'}
+                      </button>
+                    )}
                     <div className="hidden sm:flex items-center gap-2 text-white bg-white/20 px-3 py-2 rounded-lg max-w-[180px] lg:max-w-[220px]" title={currentUser?.email || ''}>
                       <User className="w-5 h-5 shrink-0" aria-hidden />
                       <span className="text-sm font-medium truncate">

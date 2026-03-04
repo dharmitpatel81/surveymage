@@ -5,8 +5,9 @@ const router = express.Router();
  * @openapi
  * /responses/checkSubmission:
  *   get:
- *     summary: Check if user has already submitted
+ *     summary: Check if user has already submitted (no auth)
  *     tags: [Responses]
+ *     security: []
  *     parameters:
  *       - in: query
  *         name: surveyId
@@ -41,6 +42,7 @@ router.get('/checkSubmission', validateCheckSubmission, async (req, res) => {
  *   post:
  *     summary: Submit survey responses (no auth)
  *     tags: [Responses]
+ *     security: []
  *     requestBody:
  *       content:
  *         application/json:

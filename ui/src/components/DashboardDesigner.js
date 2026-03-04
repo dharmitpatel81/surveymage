@@ -15,6 +15,7 @@ function DashboardDesigner() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [widgets, setWidgets] = useState([]);
+  const [dashboardTitle, setDashboardTitle] = useState('');
   const previewRef = useRef(null);
 
   useEffect(() => {
@@ -57,7 +58,6 @@ function DashboardDesigner() {
   const survey = data?.survey;
   const responses = data?.responses || [];
   const questions = survey?.questions || [];
-  const [dashboardTitle, setDashboardTitle] = useState('');
   const handleSaveDashboard = async () => {
     const config = { title: dashboardTitle, widgets };
     try {

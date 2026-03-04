@@ -26,6 +26,5 @@ module.exports = {
   error: (msg, meta) => log('error', msg, meta),
   warn: (msg, meta) => log('warn', msg, meta),
   info: (msg, meta) => log('info', msg, meta),
-  debug: (msg, meta) => log('debug', msg, meta),
   request: (method, path) => log('info', `${method} ${path}`, { type: 'request' })
 };

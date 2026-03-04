@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      unsubscribe();
+      if (typeof unsubscribe === 'function') unsubscribe();
       if (persistenceTimeoutRef.current) {
         clearTimeout(persistenceTimeoutRef.current);
       }

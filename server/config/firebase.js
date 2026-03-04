@@ -1,20 +1,41 @@
+const path = require('path');
 const admin = require('firebase-admin');
 
-// Download your service account key from Firebase Console:
-// Project Settings > Service Accounts > Generate New Private Key
-// Save it as serviceAccountKey.json in the server directory
+const REQUIRED_KEYS = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email'];
 
-let serviceAccount;
-try {
-  serviceAccount = require('../serviceAccountKey.json');
-} catch (error) {
-  console.error('Service account key not found. Please download it from Firebase Console.');
-  process.exit(1);
+function loadServiceAccount() {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    try {
+      const parsed = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+      const missing = REQUIRED_KEYS.filter((k) => !parsed[k]);
+      if (missing.length > 0) {
+        console.error(`FIREBASE_SERVICE_ACCOUNT_JSON missing keys: ${missing.join(', ')}`);
+        process.exit(1);
+      }
+      return parsed;
+    } catch (err) {
+      console.error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON: must be valid JSON. Check for unescaped quotes or newlines.');
+      process.exit(1);
+    }
+  }
+  try {
+    return require('../serviceAccountKey.json');
+  } catch {
+    const keyPath = path.join(__dirname, '../serviceAccountKey.json');
+    console.error(
+      `Firebase service account not found. Set FIREBASE_SERVICE_ACCOUNT_JSON env, or save serviceAccountKey.json at ${keyPath}. ` +
+      'Download from Firebase Console: Project Settings > Service Accounts > Generate New Private Key.'
+    );
+    process.exit(1);
+  }
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  projectId: process.env.FIREBASE_PROJECT_ID
-});
+if (!admin.apps.length) {
+  const serviceAccount = loadServiceAccount();
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id
+  });
+}
 
 module.exports = admin;
